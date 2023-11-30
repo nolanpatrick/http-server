@@ -86,49 +86,49 @@ enum http_request_type {
 };
 
 // https://httpwg.org/specs/rfc9110.html#header.fields
-struct http_request_fields { 
-    A-IM
-    Accept
-    Accept-Charset
-    Accept-Datetime
-    Accept-Encoding
-    Accept-Language
-    Access-Control-Request-Method
-    Access-Control-Request-Headers
-    Authorization
-    Cache-Control
-    Connection
-    Content-Encoding
-    Content-Length
-    Content-MD5
-    Content-Type
-    Cookie
-    Date
-    Expect
-    Forwarded
-    From
-    Host
-    HTTP2-Settings
-    If-Match
-    If-Modified-Since
-    If-None-Match
-    If-Range
-    If-Unmodified-Since
-    Max-Forwards
-    Origin
-    Pragma
-    Prefer
-    Proxy-Authorization
-    Range
-    Referer
-    TE
-    Trailer
-    Transfer-Encoding
-    User-Agent
-    Upgrade
-    Via
-    Warning
-};
+// struct http_request_fields { 
+    // A-IM
+    // Accept
+    // Accept-Charset
+    // Accept-Datetime
+    // Accept-Encoding
+    // Accept-Language
+    // Access-Control-Request-Method
+    // Access-Control-Request-Headers
+    // Authorization
+    // Cache-Control
+    // Connection
+    // Content-Encoding
+    // Content-Length
+    // Content-MD5
+    // Content-Type
+    // Cookie
+    // Date
+    // Expect
+    // Forwarded
+    // From
+    // Host
+    // HTTP2-Settings
+    // If-Match
+    // If-Modified-Since
+    // If-None-Match
+    // If-Range
+    // If-Unmodified-Since
+    // Max-Forwards
+    // Origin
+    // Pragma
+    // Prefer
+    // Proxy-Authorization
+    // Range
+    // Referer
+    // TE
+    // Trailer
+    // Transfer-Encoding
+    // User-Agent
+    // Upgrade
+    // Via
+    // Warning
+// };
 
 enum http_request_type get_request_type(unsigned char *buf) {
     return 0;
