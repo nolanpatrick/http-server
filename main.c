@@ -17,6 +17,8 @@
 #include "http/request.h"
 
 #define PORT_NO 8080
+#define HTTP_SIZE 65535
+#define URL_SIZE 1024
 
 void print_ip_address(uint32_t addr) {
     printf("%d.%d.%d.%d", (addr >> 24) & 0xFF, (addr >> 16) & 0xFF, (addr >> 8) & 0xFF, addr & 0xFF);
@@ -46,6 +48,93 @@ void printhex(unsigned char *buf, size_t len) {
     }
     printf("\n");
 }
+
+char two_hex_chars_to_char(char h1, char h0) {
+    char out = 0;
+
+    // h1 is alpha
+    if (h1 > '9') {
+        if (h1 > 'F') {
+
+        }
+        out += (h1 - 55) * 16;
+    }
+
+    // h1 is numeric
+    else {
+        out += (h1 - 48) * 16;
+    }
+
+    // h0 is alpha
+    if (h0 > '9') {
+        out += (h0 - 55);
+    }
+
+    // h0 is numeric
+    else {
+        out += (h0 - 48);
+    }
+
+    return out;
+}
+
+void url_path(char *buf, char *str, int len) {
+    // char buf[URL_SIZE] = {0};
+    char pchar = 0;
+
+    int idx = 0;
+
+    for (int i=0; i<len; i++) {
+
+        // path delimiter
+        if (str[i] == '/' && pchar != '/') {
+            buf[idx++] = str[i];
+            pchar = str[i];
+        }
+
+        // 0-9 
+        else if (str[i] >= '0' && str[i] <= '9') {
+            buf[idx++] = str[i];
+            pchar = str[i];
+        }
+
+        // A-Z
+        else if (str[i] >= 'A' && str[i] <= 'Z') {
+            buf[idx++] = str[i];
+            pchar = str[i];
+        }
+
+        // a-z
+        else if (str[i] >= 'a' && str[i] <= 'z') {
+            buf[idx++] = str[i];
+            pchar = str[i];
+        }
+
+        // _ - .
+        else if (str[i] == '_' || str[i] == '-' || str[i] == '.') {
+            buf[idx++] = str[i];
+            pchar = str[i];
+        } 
+
+        else if (str[i] == '%' && len-i > 2) {
+            printf("found control character: %%%c%c\n", str[i+1], str[i+2]);
+
+            char ctrl = two_hex_chars_to_char(str[i+1], str[i+2]);
+
+            buf[idx++] = ctrl;
+            pchar = ctrl;
+            i += 2;
+        }
+        
+        else if (str[i] == '?') {
+            break;
+        }
+    }
+
+    printf("url: %s\n", buf);
+}
+
+char response_test[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nServer: Hello\r\nContent-Length: 28\r\n\r\n<html><h1>Hello!</h1></html>";
 
 
 int main(void) {
@@ -89,10 +178,7 @@ int main(void) {
         exit(0); 
     }
 
-    // struct iphdr buffer;
-    unsigned char buffer[65535] = {0};
-
-    // struct ipv4_header buffer;
+    char buffer[HTTP_SIZE] = {0};
 
     while (1) {
         int msg_size = recvfrom(accepted_fd, 
@@ -101,62 +187,47 @@ int main(void) {
                                 (struct sockaddr*)&client_addr, 
                                 &client_addrlen);
 
-		printf("[server] received %d B packet from %s:%d\n", msg_size, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+        printf("[server] received %d B packet from %s:%d\n", msg_size, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        printf("%s\n", buffer);
 
-        char *http_header = strtok(buffer, "\r\n");
+        if (msg_size > 0) {
 
-        char *request_type = strtok(http_header, " \t");
-        char *request_path = strtok(NULL, " \t");
-        char *request_http = strtok(NULL, " \t");
+            printf("%s\n", buffer);
 
-        // printf("http header: %s\n", http_header);
+            char *http_header = strtok(buffer, "\r\n");
 
-        // char *request_type = strcmp(request_type, req);
+            char *request_type = strtok(http_header, " \t");
+            char *request_path = strtok(NULL, " \t");
+            char *request_http = strtok(NULL, " \t");
 
-        printf("Request type: %s\n", request_type);
-        printf("Request path: %s\n", request_path);
-        printf("Request ver: %s\n", request_http);
+            char *relative_path = request_path+1;
 
-        // if (!strcmp(request_type, "GET")) {
-            // FILE *fp;
+            printf("Request type: %s\n", request_type);
+            printf("Request path: %s\n", request_path);
+            printf("Request ver: %s\n", request_http);
+
             printf("Requested representation of file %s\n", request_path);
 
-            // fp = fopen("index.html", "rb");
+            // sanitize url
+            char buf[URL_SIZE] = {0};
+            url_path(buf, request_path, strlen(request_path));
 
             char buffer2[65535];
 
-            char response_test[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nServer: Hello\r\nContent-Length: 28\r\n\r\n<html><h1>Hello!</h1></html>";
-
-            // sprintf(buffer2, "%s", response_test);
 
             printf("%s\n", response_test);
 
             sendto(accepted_fd, &response_test, sizeof(response_test), 0, (struct sockaddr*)&client_addr, sizeof(client_addr));
+        }
+        else {
+            sendto(accepted_fd, NULL, 0, 0, (struct sockaddr*)&client_addr, sizeof(client_addr));
 
-        // }
+        }
 
-        printf("");
+		
 
-        // if (!) {
-        //     printf("GET Request!\n");
-        // }
-    
-        // struct iphdr header = {0};
-
-        // struct ipv4_header* header = (struct ipv4_header*)&buffer; 
-        printhex(buffer, msg_size);     
-
-
-        // printf("[server] packet length: %d\n", test->version);
         
     }
-    
-    
-
-    // int received = recv()
-
 
     return 0;
 }
